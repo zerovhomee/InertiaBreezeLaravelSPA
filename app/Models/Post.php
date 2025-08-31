@@ -12,4 +12,9 @@ class Post extends Model
     public function user(){
         return $this->belongsTo(User::class,'user_id','id');
     }
+
+    public function comments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Comment::class)->latest();
+    }
 }

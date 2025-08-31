@@ -1,71 +1,3 @@
-<script setup lang="ts">
-import { defineProps } from 'vue';
-import { Link, router, useForm} from '@inertiajs/vue3';
-import { ref, onMounted, onUnmounted } from 'vue';
-
-const isOpen = ref(false);
-
-// Закрытие при клике вне dropdown
-const handleClickOutside = (event: MouseEvent) => {
-    const dropdown = document.querySelector('.relative');
-    if (dropdown && !dropdown.contains(event.target as Node)) {
-        isOpen.value = false;
-    }
-};
-
-onMounted(() => {
-    document.addEventListener('click', handleClickOutside);
-});
-
-onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside);
-});
-
-const logout = () => {
-    router.post('/logout');
-    isOpen.value = false;
-};
-
-interface Comment {
-    id: number;
-    content: string;
-    created_at: string;
-    post_id: number;
-}
-// Определяем props
-const props = defineProps<{
-    posts: Array<{
-        id: number;
-        title: string;
-        description: string;
-        user_id: number;
-    }>
-}>();
-
-const commentForms = ref<{ [key: number]: string }>({});
-
-props.posts.forEach(post => {
-    commentForms.value[post.id] = '';
-});
-const submitComment = (postId: number) => {
-    const content = commentForms.value[postId]?.trim();
-
-    if (!content) return;
-
-    useForm({
-        content: content,
-        post_id: postId,
-    }).post(`/posts/${postId}/comments`, {
-        preserveScroll: true,
-        onSuccess: () => {
-            // Очищаем поле после успешной отправки
-            commentForms.value[postId] = '';
-        },
-    });
-};
-
-</script>
-
 <template>
     <div class="min-h-screen bg-gray-900 py-8">
         <!-- Кнопка пользователя в правом верхнем углу -->
@@ -107,7 +39,7 @@ const submitComment = (postId: number) => {
                 </div>
             </div>
         </div>
-    <div class="min-h-screen bg-gray-900 py-8">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center mb-8">
                 <h1 class="text-3xl font-bold text-white">Posts</h1>
                 <Link
@@ -117,7 +49,6 @@ const submitComment = (postId: number) => {
                     Create Post
                 </Link>
             </div>
-
             <!-- Список постов -->
             <div class="space-y-6">
                 <div
@@ -128,24 +59,34 @@ const submitComment = (postId: number) => {
                     <!-- Заголовок поста -->
                     <h2 class="text-xl font-semibold text-white mb-2">{{ post.title }}</h2>
 
-                    <h3 class="text-xl font-semibold text-white mb-2">Author_id: {{ post.user_id }}</h3>
-
                     <!-- Текст поста -->
                     <p class="text-gray-300 mb-4">{{ post.description }}</p>
 
-                    <!-- Комментарии
+                    <!-- Информация о посте -->
+                    <div class="flex items-center text-sm text-gray-400 mb-4">
+                        <span>Posted by {{ post.user?.name }} • {{ formatDate(post.created_at) }}</span>
+                    </div>
+
+                    <!-- Комментарии -->
                     <div class="border-t border-gray-700 pt-4">
-                        <h3 class="text-lg font-medium text-white mb-4">Comments</h3>
+                        <h3 class="text-lg font-medium text-white mb-4">
+                            Comments ({{ post.comments?.length || 0 }})
+                        </h3>
 
-
+                        <!-- Список комментариев -->
                         <div v-if="post.comments && post.comments.length" class="space-y-3 mb-4">
                             <div
                                 v-for="comment in post.comments"
                                 :key="comment.id"
                                 class="bg-gray-700 rounded-lg p-3"
                             >
-                                <p class="text-gray-200">{{ comment.content }}</p>
-
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-medium text-white text-sm">{{ comment.user?.name }}</p>
+                                        <p class="text-gray-200">{{ comment.content }}</p>
+                                    </div>
+                                    <span class="text-xs text-gray-400">{{ formatDate(comment.created_at) }}</span>
+                                </div>
                             </div>
                         </div>
 
@@ -153,45 +94,128 @@ const submitComment = (postId: number) => {
                             No comments yet. Be the first to comment!
                         </div>
 
-
+                        <!-- Форма добавления комментария -->
                         <form @submit.prevent="submitComment(post.id)" class="space-y-3">
               <textarea
                   v-model="commentForms[post.id]"
-                  placeholder="Write a comment..."
-                  rows="3"
-                  class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  :placeholder="`Write a comment to ${post.user?.name}...`"
+                  rows="2"
+                  class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
               ></textarea>
 
                             <button
                                 type="submit"
                                 :disabled="!commentForms[post.id]?.trim()"
-                                class="bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md transition-colors"
+                                class="bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-3 py-1 rounded-md text-sm transition-colors"
                             >
                                 Add Comment
                             </button>
                         </form>
                     </div>
                 </div>
-                -->
-                </div>
 
                 <!-- Сообщение если постов нет -->
                 <div v-if="!posts.length" class="text-center py-12">
                     <p class="text-gray-400 text-lg">No posts yet.</p>
-                    <Link
-                        href="/posts/create"
-                        class="inline-block mt-4 bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-md transition-colors"
-                    >
-                        Create First Post
-                    </Link>
                 </div>
             </div>
+        </div>
     </div>
-    </div>
-
-
 </template>
 
-<style scoped>
+<script setup lang="ts">
+import { useForm, Link, router } from '@inertiajs/vue3';
+import { ref, onMounted, onUnmounted, defineProps} from 'vue';
 
-</style>
+interface User {
+    id: number;
+    name: string;
+    email: string;
+}
+
+interface Comment {
+    id: number;
+    content: string;
+    user_id: number;
+    post_id: number;
+    created_at: string;
+    user?: User;
+}
+
+interface Post {
+    id: number;
+    title: string;
+    description: string;
+    user_id: number;
+    created_at: string;
+    user?: User;
+    comments?: Comment[];
+}
+
+const props = defineProps<{
+    posts: Post[];
+}>();
+
+// Объект для хранения комментариев к каждому посту
+const commentForms = ref<{ [key: number]: string }>({});
+
+// Инициализируем пустые строки для каждого поста
+props.posts.forEach(post => {
+    commentForms.value[post.id] = '';
+});
+
+// Функция для отправки комментария
+const submitComment = (postId: number) => {
+    const content = commentForms.value[postId]?.trim();
+
+    if (!content) return;
+
+    useForm({
+        content: content,
+        post_id: postId,
+        // user_id автоматически берется из аутентификации на сервере
+    }).post(`/posts/${postId}/comments`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            // Очищаем поле после успешной отправки
+            commentForms.value[postId] = '';
+        },
+        onError: (errors) => {
+            console.error('Error posting comment:', errors);
+        }
+    });
+};
+
+// Функция для форматирования даты
+const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+const isOpen = ref(false);
+
+// Закрытие при клике вне dropdown
+const handleClickOutside = (event: MouseEvent) => {
+    const dropdown = document.querySelector('.relative');
+    if (dropdown && !dropdown.contains(event.target as Node)) {
+        isOpen.value = false;
+    }
+};
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
+});
+
+const logout = () => {
+    router.post('/logout');
+    isOpen.value = false;
+};
+</script>
