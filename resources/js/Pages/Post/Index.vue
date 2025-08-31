@@ -75,19 +75,11 @@
 
                         <!-- Список комментариев -->
                         <div v-if="post.comments && post.comments.length" class="space-y-3 mb-4">
-                            <div
+                            <CommentVote
                                 v-for="comment in post.comments"
                                 :key="comment.id"
-                                class="bg-gray-700 rounded-lg p-3"
-                            >
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <p class="font-medium text-white text-sm">{{ comment.user?.name }}</p>
-                                        <p class="text-gray-200">{{ comment.content }}</p>
-                                    </div>
-                                    <span class="text-xs text-gray-400">{{ formatDate(comment.created_at) }}</span>
-                                </div>
-                            </div>
+                                :comment="comment"
+                            />
                         </div>
 
                         <div v-else class="text-gray-400 mb-4">
@@ -126,6 +118,7 @@
 <script setup lang="ts">
 import { useForm, Link, router } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted, defineProps} from 'vue';
+import CommentVote from "@/Components/CommentVote.vue";
 
 interface User {
     id: number;

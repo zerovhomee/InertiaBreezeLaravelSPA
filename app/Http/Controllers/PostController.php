@@ -13,9 +13,15 @@ use Inertia\Inertia;
 class PostController extends Controller
 {
     public function index(){
-        $posts = Post::with(['user', 'comments.user'])
-            ->latest()
-            ->get();
+        $posts = Post::with(['user', 'comments' => function($query) {
+            $query->with(['user', 'votes'])
+                ->withCount(['votes as rating' => function($query) {
+                    $query->select(\DB::raw('COALESCE(SUM(vote), 0)'));
+                }])
+                ->orderBy('rating', 'desc')
+                ->orderBy('created_at', 'desc');
+        }])->latest()->get();
+
         return Inertia::render('Post/Index', compact('posts'));
     }
 

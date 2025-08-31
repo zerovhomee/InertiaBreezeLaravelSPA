@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\CommentVoteController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostController;
 use Illuminate\Foundation\Application;
@@ -29,6 +30,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/posts/{post}/edit', [PostController::class, 'edit'])->name('posts.edit');
     Route::patch('/posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::post('/comments/{comment}/vote', [CommentVoteController::class, 'vote'])->name('comments.vote');
+    Route::delete('/comments/{comment}/vote', [CommentVoteController::class, 'removeVote'])->name('comments.vote.remove');
 });
 
 Route::middleware('auth')->group(function () {
